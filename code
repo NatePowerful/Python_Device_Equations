@@ -1,0 +1,16 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from dataclasses import dataclass
+
+q  = 1.602176634e-19         # in C
+Boltz = 1.380649e-23             # in J/K
+eps0 = 8.8541878128e-14      # in F/cm (in CGS-like units: 8.854e-12 F/m => 8.854e-14 F/cm)
+Tref = 300.0                 # in Km
+
+def Nc_physical(T, m_eff, g=1.0):
+    T = np.asarray(T, dtype=float)
+    return (2.0 * g * ((2.0 * np.pi * (m_eff * m0) * kB * T) / (h**2))**1.5) * 1e-6
+
+def Nv_physical(T, m_eff, g=1.0):
+    T = np.asarray(T, dtype=float)
+    return (2.0 * g * ((2.0 * np.pi * (m_eff * m0) * kB * T) / (h**2))**1.5) * 1e-6
