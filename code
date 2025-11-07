@@ -2,15 +2,88 @@ import numpy as np
 import matplotlib.pyplot as plt
 from dataclasses import dataclass
 
-q  = 1.602176634e-19         # in C
-Boltz = 1.380649e-23             # in J/K
-eps0 = 8.8541878128e-14      # in F/cm (in CGS-like units: 8.854e-12 F/m => 8.854e-14 F/cm)
-Tref = 300.0                 # in Km
 
-def Nc_physical(T, m_eff, g=1.0):
-    T = np.asarray(T, dtype=float)
-    return (2.0 * g * ((2.0 * np.pi * (m_eff * m0) * kB * T) / (h**2))**1.5) * 1e-6
+#need constraint if user inputs  unrealistic data
 
-def Nv_physical(T, m_eff, g=1.0):
+# -------------------------
+# Universal constants
+# -------------------------
+q   = 1.602176634e-19        # C
+kB  = 1.380649e-23           # J/K
+h   = 6.62607015e-34         # J*s
+m0  = 9.1093837015e-31       # kg
+Tref = 300.0                 # K
+
+# SI → cm^-3 conversion: results from the DOS formula are in m^-3; multiply by 1e-6 to get cm^-3
+M3_TO_CM3 = 1e-6
+
+# -------------------------
+# DOS helpers (from first principles, includes π and h explicitly)
+# m_eff is DOS effective mass in units of m0 (electron rest mass)
+# -------------------------
+def Nc_physical(T, m_eff):
     T = np.asarray(T, dtype=float)
-    return (2.0 * g * ((2.0 * np.pi * (m_eff * m0) * kB * T) / (h**2))**1.5) * 1e-6
+    return (2.0 * ((2.0 * np.pi * (m_eff * m0) * kB * T) / (h**2))**1.5) * M3_TO_CM3
+
+def Nv_physical(T, m_eff):
+    T = np.asarray(T, dtype=float)
+    return (2.0 * ((2.0 * np.pi * (m_eff * m0) * kB * T) / (h**2))**1.5) * M3_TO_CM3
+
+# -------------------------
+# Material model (only what we need for 0th order: Eg(T), m*_n, m*_p, optional valley degeneracies)
+# Eg(T) returns eV
+# -------------------------
+@dataclass
+class Material0th:
+    name: str
+    mstar_n: float              # DOS effective mass for electrons, in units of m0
+    mstar_p: float              # DOS effective mass for holes, in units of m0
+    # Varshni parameters (example placeholders; replace with your course's values)
+    Eg0: float = 1.17           # eV
+    alpha: float = 4.73e-4      # eV/K
+    beta: float = 636.0         # K
+
+    def Eg(self, T):
+        T = np.asarray(T, dtype=float)
+        return self.Eg0 - (self.alpha * T**2) / (T + self.beta)  # eV
+
+    def Nc(self, T):
+        return Nc_physical(T, self.mstar_n, g=self.g_c)
+
+    def Nv(self, T):
+        return Nv_physical(T, self.mstar_p, g=self.g_v)
+
+    def ni(self, T):
+        Eg_J = self.Eg(T) * q                    # eV -> J
+        Nc = self.Nc(T)
+        Nv = self.Nv(T)
+        return np.sqrt(Nc * Nv) * np.exp(-Eg_J / (2.0 * kB * T))  # cm^-3
+
+# -------------------------
+# Example: Silicon (put YOUR class parameters here)
+# mstar_n, mstar_p are DOS masses (not transport masses). The values below are common approximations;
+# replace with the exact values your instructor/text provides.
+# -------------------------
+Si = Material0th(
+    name="Silicon",
+    mstar_n=1.08,     # DOS electron mass (units of m0) – example
+    mstar_p=0.81,     # DOS hole mass (units of m0) – example
+    Eg0=1.17, alpha=4.73e-4, beta=636.0
+)
+
+# -------------------------
+# Compute/plot 0th-order ni(T)
+# -------------------------
+T = np.linspace(200, 900, 400)     # K
+ni_Si = Si.ni(T)
+
+plt.figure()
+plt.semilogy(T, ni_Si)
+plt.xlabel("Temperature (K)")
+plt.ylabel(r"$n_i(T)$ (cm$^{-3}$)")
+plt.title("Silicon: Intrinsic Carrier Concentration (0th order)")
+plt.grid(True, which="both")
+plt.tight_layout()
+plt.show()
+
+
