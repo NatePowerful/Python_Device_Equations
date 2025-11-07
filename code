@@ -98,7 +98,6 @@ def free_carriers_first_order(mat, T, NA, ND):
     NA = np.maximum(np.asarray(NA, dtype=float), 0.0)
     ND = np.maximum(np.asarray(ND, dtype=float), 0.0)
 
-    # Optional validation step
     # validate_inputs(T, NA, ND)
 
     ni = mat.ni(T)                                 # cm^-3
