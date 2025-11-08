@@ -1,0 +1,93 @@
+
+# -------------------------
+# 1st-order equations: Free carriers (complete ionization)
+# -------------------------
+def free_carriers_first_order(mat, T, NA, ND):
+    """
+    Compute 1st-order free carriers (complete ionization) for given material.
+
+    Parameters
+    ----------
+    mat : object with ni(T) -> intrinsic concentration in cm^-3
+    T   : K
+    NA  : cm^-3  (acceptor density)
+    ND  : cm^-3  (donor density)
+
+    Returns
+    -------
+    n, p : cm^-3
+    """
+    # Added safety clamps
+    T  = np.maximum(np.asarray(T,  dtype=float), 1e-12)
+    NA = np.maximum(np.asarray(NA, dtype=float), 0.0)
+    ND = np.maximum(np.asarray(ND, dtype=float), 0.0)
+
+    # validate_inputs(T, NA, ND)
+
+    ni = mat.ni(T)                                 # cm^-3
+    dN = ND - NA
+    # Guard against tiny numerical negatives under the square root:
+    root = np.sqrt(np.maximum((dN/2.0)**2 + ni**2, 0.0))
+    n = root + dN/2.0
+    # Avoid division by zero:
+    n = np.maximum(n, 1e-30)
+    p = (ni**2) / n
+    return n, p
+
+# ---------- Plot functions ----------
+
+#Here, we are leaving NA fixed while ND sweeps
+def plot_n_map_vs_ND_T(mat,
+                       ND_vals=np.logspace(14, 19, 121),
+                       T_vals=np.linspace(200, 900, 181),
+                       NA_fixed=1e14,
+                       fname="fig_free_n_map.png",
+                       title_prefix="",
+                       use_log_color=True):
+    ND_grid, T_grid = np.meshgrid(ND_vals, T_vals, indexing="ij")
+    NA_grid = np.full_like(ND_grid, NA_fixed)
+
+    n, _ = free_carriers_first_order(mat, T_grid, NA_grid, ND_grid)
+
+    plt.figure()
+    # Added optional log-scale color mapping for wide carrier ranges
+    if use_log_color:
+        cs = plt.contourf(ND_grid, T_grid, n, levels=30, norm=LogNorm())
+    else:
+        cs = plt.contourf(ND_grid, T_grid, n, levels=30)
+    plt.xscale("log")
+    plt.xlabel(r"$N_D$ (cm$^{-3}$)")
+    plt.ylabel("Temperature (K)")
+    plt.title(f"{title_prefix} Free Electron Concentration n (1st order)")
+    cbar = plt.colorbar(cs); cbar.set_label(r"n (cm$^{-3}$)")
+    plt.tight_layout()
+    plt.savefig(fname, dpi=200)
+    plt.close()   # Added to free memory after each figure
+
+#Here, we are leaving ND fixed while NA sweeps
+def plot_p_map_vs_NA_T(mat,
+                       NA_vals=np.logspace(14, 19, 121),
+                       T_vals=np.linspace(200, 900, 181),
+                       ND_fixed=1e14,
+                       fname="fig_free_p_map.png",
+                       title_prefix="",
+                       use_log_color=True):
+    NA_grid, T_grid = np.meshgrid(NA_vals, T_vals, indexing="ij")
+    ND_grid = np.full_like(NA_grid, ND_fixed)
+
+    _, p = free_carriers_first_order(mat, T_grid, NA_grid, ND_grid)
+
+    plt.figure()
+    # Added optional log-scale color mapping for wide carrier ranges
+    if use_log_color:
+        cs = plt.contourf(NA_grid, T_grid, p, levels=30, norm=LogNorm())
+    else:
+        cs = plt.contourf(NA_grid, T_grid, p, levels=30)
+    plt.xscale("log")
+    plt.xlabel(r"$N_A$ (cm$^{-3}$)")
+    plt.ylabel("Temperature (K)")
+    plt.title(f"{title_prefix} Free Hole Concentration p (1st order)")
+    cbar = plt.colorbar(cs); cbar.set_label(r"p (cm$^{-3}$)")
+    plt.tight_layout()
+    plt.savefig(fname, dpi=200)
+    plt.close()   # Added to free memory after each figure
