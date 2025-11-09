@@ -2,8 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from dataclasses import dataclass
-import Zero_Order
-# import Zero_Order   # <- remove or keep only if you have this module
+# import Zero_Order   # <- keep commented out unless you actually have this module
 
 #need constraint if user inputs  unrealistic data
 
@@ -76,15 +75,12 @@ Si = Material0th(
     E_gap = 1.1
 )
 
-
 SiC = Material0th(
     name="4H-SiC",
     mstar_n=0.42,   # DOS electron mass / m0  (placeholder; use your class numbers if given)
     mstar_p=0.66,   # DOS hole mass / m0      (placeholder)
-    E_gap=2.2      # eV (approx at 300K)
+    E_gap=2.2      # eV (approx at 300K per slide list)
 )
-
-
 
 InAs = Material0th(
     name="InAs",
@@ -92,6 +88,7 @@ InAs = Material0th(
     mstar_p=0.41,   # DOS hole mass / m0      (placeholder)
     E_gap=0.354     # eV (approx at 300K)
 )
+
 # -------------------------
 # 1st-order equations: Free carriers (complete ionization)
 # -------------------------
@@ -143,12 +140,26 @@ def plot_n_map_vs_ND_T(mat,
 
     n, _ = free_carriers_first_order(mat, T_grid, NA_grid, ND_grid)
 
+    # Degeneracy warning per slides: n/Nc >= exp(-3) ~ EF within ~3kT of Ec
+    NcT = mat.Nc(T_grid)
+    deg_mask = (n / np.maximum(NcT, 1e-300)) >= np.exp(-3.0)
+    if np.any(deg_mask):
+        print(f"Warning [{mat.name} n-map]: region includes degenerate electrons (EF near/inside Ec). "
+              "1st-order Boltzmann may be inaccurate there.")
+
     plt.figure()
-    # Added optional log-scale color mapping for wide carrier ranges
+    # Added optional log-scale color mapping for wide carrier ranges (bounded for readability)
     if use_log_color:
-        cs = plt.contourf(ND_grid, T_grid, n, levels=30, norm=LogNorm())
+        vmin = max(np.nanmax(n) * 1e-8, 1e5)      # keep lower bound reasonable
+        vmax = max(np.nanmax(n), vmin * 1e3)      # ensure ≥3 decades of range
+        cs = plt.contourf(ND_grid, T_grid, n, levels=30, norm=LogNorm(vmin=vmin, vmax=vmax))
     else:
         cs = plt.contourf(ND_grid, T_grid, n, levels=30)
+    # --- NEW: draw degenerate region with hatching (visual cue) ---
+    plt.contour(ND_grid, T_grid, deg_mask.astype(float), levels=[0.5], colors="k", linewidths=1.0)
+    plt.contourf(ND_grid, T_grid, deg_mask.astype(float),
+                 levels=[0.5, 1.1], hatches=["///"], colors="none", alpha=0)
+
     plt.xscale("log")
     plt.xlabel(r"$N_D$ (cm$^{-3}$)")
     plt.ylabel("Temperature (K)")
@@ -171,12 +182,26 @@ def plot_p_map_vs_NA_T(mat,
 
     _, p = free_carriers_first_order(mat, T_grid, NA_grid, ND_grid)
 
+    # Degeneracy warning per slides: p/Nv >= exp(-3) ~ EF within ~3kT of Ev
+    NvT = mat.Nv(T_grid)
+    deg_mask = (p / np.maximum(NvT, 1e-300)) >= np.exp(-3.0)
+    if np.any(deg_mask):
+        print(f"Warning [{mat.name} p-map]: region includes degenerate holes (EF near/inside Ev). "
+              "1st-order Boltzmann may be inaccurate there.")
+
     plt.figure()
-    # Added optional log-scale color mapping for wide carrier ranges
+    # Added optional log-scale color mapping for wide carrier ranges (bounded for readability)
     if use_log_color:
-        cs = plt.contourf(NA_grid, T_grid, p, levels=30, norm=LogNorm())
+        vmin = max(np.nanmax(p) * 1e-8, 1e5)
+        vmax = max(np.nanmax(p), vmin * 1e3)
+        cs = plt.contourf(NA_grid, T_grid, p, levels=30, norm=LogNorm(vmin=vmin, vmax=vmax))
     else:
         cs = plt.contourf(NA_grid, T_grid, p, levels=30)
+    # --- NEW: draw degenerate region with hatching (visual cue) ---
+    plt.contour(NA_grid, T_grid, deg_mask.astype(float), levels=[0.5], colors="k", linewidths=1.0)
+    plt.contourf(NA_grid, T_grid, deg_mask.astype(float),
+                 levels=[0.5, 1.1], hatches=["///"], colors="none", alpha=0)
+
     plt.xscale("log")
     plt.xlabel(r"$N_A$ (cm$^{-3}$)")
     plt.ylabel("Temperature (K)")
