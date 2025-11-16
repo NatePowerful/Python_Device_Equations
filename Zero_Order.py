@@ -74,3 +74,20 @@ Si = Material0th(
     mstar_p=0.81,     # DOS hole mass (units of m0) – example
     E_gap = 1.1
 )
+
+
+
+SiC = Material0th(
+    name="4H-SiC",
+    mstar_n=0.42,   # DOS electron mass / m0  (placeholder; use your class numbers if given)
+    mstar_p=0.66,   # DOS hole mass / m0      (placeholder)
+    E_gap=2.2      # eV (approx at 300K per slide list)
+)
+
+
+InAs = Material0th(
+    name="InAs",
+    mstar_n=0.026,  # DOS electron mass / m0  (light electrons)
+    mstar_p=0.41,   # DOS hole mass / m0      (placeholder)
+    E_gap=0.354     # eV (approx at 300K)
+)
