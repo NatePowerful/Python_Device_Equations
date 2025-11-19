@@ -49,7 +49,7 @@ if __name__ == "__main__":
     print('running second order main ...') # verifying the plot function is running 
 
     # Choos Teamperature (T) and doping axes once
-    T_axis = np.linspace(250, 400, 50) # K
+    T_axis = np.linspace(300, 3200, 300) # K
     ND_axis = np.logspace(15, 20, 60) 
     T_grid, ND_grid = np.meshgrid(T_axis, ND_axis, indexing="ij")
     NA_grid = np.zeros_like(T_grid)
@@ -59,6 +59,11 @@ if __name__ == "__main__":
     
     for mat, name in zip(materials, names):
         n,p, Ef_minus_Ei , deg_map = second_order_free_carriers(mat, T_grid, NA_grid, ND_grid)
+
+        T_melt_dict = {"Si": 1687, "SiC": 3100, "InAs": 1215}# Melting temperatures for each material in Kelvin from online resources
+        T_melt = T_melt_dict[name]# Assigning melting temperature based on material name
+
+        melt_mask = T_grid >= T_melt # Creating a binary map (0/1) where the temaperature exceeds the melting point 
         #plot or print results
         plt.figure()
         cs = plt.contourf(ND_axis, T_axis, deg_map, levels=[0 , 0.5, 1] )
@@ -69,6 +74,6 @@ if __name__ == "__main__":
         plt.ylabel("Temperature (K)")
 
         plt.contour(ND_grid, T_grid, deg_map, levels = [0.5], colors="red")
-        
+        plt.contour(ND_grid, T_grid, melt_mask, levels = [0.5], colors = "black", linestyles="dashed")
         
     plt.show()
