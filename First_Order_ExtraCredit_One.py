@@ -12,12 +12,13 @@ from First_Order import (
 # Shallow-donor / shallow-acceptor energies for each material (in eV)
 # Adjust these if your instructor gives more specific values.
 E_D_Si   = 0.045   # P in Si ~ 45 meV
-E_D_SiC  = 0.100   # rough shallow donor in 4H-SiC (example)
+E_D_SiC  = 0.200   # rough shallow donor in 4H-SiC (example)
 E_D_InAs = 0.006   # very shallow donor in InAs (example)
+
 
 E_A_Si   = 0.045   # shallow B in Si (example)
 E_A_SiC  = 0.200   # rough acceptor in 4H-SiC (example)
-E_A_InAs = 0.025   # example shallow acceptor in InAs
+E_A_InAs = 0.03   # example shallow acceptor in InAs
 
 # degeneracy factors (typical values)
 gD = 0.5
@@ -191,10 +192,11 @@ def plot_freezeout_ratio_map(mat,
 
 if __name__ == "__main__":
     # Common ND axis
-    ND_vals = np.logspace(14, 19, 121)
+    T_axis = np.linspace(100, 3000, 300) 
+    ND_vals = np.logspace(13, 20, 60)
 
     # Condition A: Silicon (similar window to your 1st-order Si plots, but extend down to low T)
-    T_vals_Si = np.linspace(50, 900, 181)
+    T_vals_Si = T_axis
     plot_freezeout_ratio_map(Si,
                              ND_vals=ND_vals,
                              T_vals=T_vals_Si,
@@ -203,7 +205,7 @@ if __name__ == "__main__":
                              fname="fig_Si_freezeout_ratio.png")
 
     # Condition B: 4H-SiC (higher max temp, but we still care about low-T freeze-out)
-    T_vals_SiC = np.linspace(50, 1500, 241)
+    T_vals_SiC = T_axis
     plot_freezeout_ratio_map(SiC,
                              ND_vals=ND_vals,
                              T_vals=T_vals_SiC,
@@ -212,7 +214,7 @@ if __name__ == "__main__":
                              fname="fig_SiC_freezeout_ratio.png")
 
     # Condition C: InAs (lower max temp)
-    T_vals_InAs = np.linspace(50, 700, 161)
+    T_vals_InAs = T_axis
     plot_freezeout_ratio_map(InAs,
                              ND_vals=ND_vals,
                              T_vals=T_vals_InAs,
