@@ -1,0 +1,4 @@
+{
+    "editor.cursorBlinking": "smooth",
+    "python.REPL.enableREPLSmartSend": false
+}
