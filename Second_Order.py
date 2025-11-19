@@ -13,11 +13,11 @@ def second_order_free_carriers(material, T, NA, ND, degeneracy_threshold=3.0):
 
     Parameters:
     material - object (e.g,, Si, SiC, InAs) that must provide ni(T) method
-        T: array-like or float 
+        T: array-like/float 
             Temperature(s) I would like to check for degeneracy, measured in Kelvin
-        NA: array-like or float
+        NA: array-like/float
             How much P-type doping there is (acceptors) 
-        ND:
+        ND: array-like/float
             How much N-type doping there is (donors)
         degeneracy_threshhold: float
             Sets the cuttoff for deciding when the material becomes degenerate.
@@ -39,7 +39,7 @@ def second_order_free_carriers(material, T, NA, ND, degeneracy_threshold=3.0):
 
     degenerate_map = Ef_minus_Ei > degeneracy_threshold * kB * T # Identfies the temperature-doping combination where the material becomes degenerate
     
-    return n, p, Ef_minus_Ei, degenerate_map
+    return n, p, Ef_minus_Ei, degenerate_map # returns the free electron concentration, free hole conentration, Ef - Ei values, and the degenerate map
 
 
 
@@ -50,13 +50,13 @@ if __name__ == "__main__":
 
     # Choos Teamperature (T) and doping axes once
     T_axis = np.linspace(300, 3200, 300) # K
-    ND_axis = np.logspace(15, 20, 60) 
-    T_grid, ND_grid = np.meshgrid(T_axis, ND_axis, indexing="ij")
-    NA_grid = np.zeros_like(T_grid)
+    ND_axis = np.logspace(15, 20, 60) # cm^-3
+    T_grid, ND_grid = np.meshgrid(T_axis, ND_axis, indexing="ij")#creates a grid of temperature and donor concentration values
+    NA_grid = np.zeros_like(T_grid)# creates a grid of acceptor concentration values set to zero (n-type doping only)
 
     materials = [Si, SiC, InAs] # List of material obkects that we imported from First_Order.py
     names = ["Si", "SiC", "InAs"] # List of strings for the material names
-    
+    #Loop over materials that are lists to generate plots for each material
     for mat, name in zip(materials, names):
         n,p, Ef_minus_Ei , deg_map = second_order_free_carriers(mat, T_grid, NA_grid, ND_grid)
 
@@ -67,13 +67,13 @@ if __name__ == "__main__":
         #plot or print results
         plt.figure()
         cs = plt.contourf(ND_axis, T_axis, deg_map, levels=[0 , 0.5, 1] )
-        plt.title(f"Second-Order Ef - Ei for {name}")
-        plt.colorbar(cs, label="Non-degenerate (0) / Degenerate (1)")
-        plt.xscale("log")
-        plt.xlabel("Donor Concentration ND (cm$^{-3}$)")
-        plt.ylabel("Temperature (K)")
+        plt.title(f"Second-Order Ef - Ei for {name}") # Defining the title of the plot
+        plt.colorbar(cs, label="Non-degenerate (0) / Degenerate (1)") # Adding a color bar for dgenerate and non-degenerate 
+        plt.xscale("log") # Setting the x-axis not to be 1,2,3,4,5,etc. but rather logarithmic scale like 10,100,1000,10000,etc.
+        plt.xlabel("Donor Concentration ND (cm$^{-3}$)") # lables the x-axis in terms of the Number of Doners(Note the $ is latex so that the labels come out looking cleaner)
+        plt.ylabel("Temperature (K)")#Lables the y-axis in terms of temperature in Kelvin
 
-        plt.contour(ND_grid, T_grid, deg_map, levels = [0.5], colors="red")
-        plt.contour(ND_grid, T_grid, melt_mask, levels = [0.5], colors = "black", linestyles="dashed")
+        plt.contour(ND_grid, T_grid, deg_map, levels = [0.5], colors="red") # Adding a contour line to show the boundary betweeen degenerate and non-degenerate regions
+        plt.contour(ND_grid, T_grid, melt_mask, levels = [0.5], colors = "black", linestyles="dashed") # Adding a contour line thats a black dashed line to show the melting temperature boundary
         
-    plt.show()
+    plt.show() # Finally show all the plots once they have been generated
