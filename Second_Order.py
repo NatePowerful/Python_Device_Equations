@@ -46,6 +46,7 @@ def second_order_free_carriers(material, T, NA, ND, degeneracy_threshold=3.0):
 #calling the function to test it out 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    print('running second order main ...') # verifying the plot function is running 
 
     # Choos Teamperature (T) and doping axes once
     T_axis = np.linspace(250, 400, 50) # K
@@ -55,21 +56,19 @@ if __name__ == "__main__":
 
     materials = [Si, SiC, InAs] # List of material obkects that we imported from First_Order.py
     names = ["Si", "SiC", "InAs"] # List of strings for the material names
-    print('running second order main ...') # verifying the plot function is running 
-
+    
     for mat, name in zip(materials, names):
         n,p, Ef_minus_Ei , deg_map = second_order_free_carriers(mat, T_grid, NA_grid, ND_grid)
-
-
-       
         #plot or print results
         plt.figure()
-        plt.contourf(ND_axis, T_axis, deg_map, levels=[0 , 0.5, 1] )
+        cs = plt.contourf(ND_axis, T_axis, deg_map, levels=[0 , 0.5, 1] )
         plt.title(f"Second-Order Ef - Ei for {name}")
-        plt.colorbar(label="Non-degenerate (0) / Degenerate (1)")
+        plt.colorbar(cs, label="Non-degenerate (0) / Degenerate (1)")
         plt.xscale("log")
         plt.xlabel("Donor Concentration ND (cm$^{-3}$)")
         plt.ylabel("Temperature (K)")
 
         plt.contour(ND_grid, T_grid, deg_map, levels = [0.5], colors="red")
-        plt.show()
+        
+        
+    plt.show()
