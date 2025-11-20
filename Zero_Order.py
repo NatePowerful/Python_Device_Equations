@@ -106,3 +106,4 @@ if __name__ == "Zero_Order":
         plt.ylabel("Intrinsic Carrier Concentration ni (cm$^{-3}$)") #labels the y-axis
         plt.title(f"Zeroth-Order Intrinsic Carrier Concentration for {name}")#title of the actual plot
         plt.grid( True, which = "both", ls = "--") #adding a grid to the plot for better vsual clarity)) 
+plt.show() # finally show the plot once all the materials have been plotted
