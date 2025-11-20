@@ -92,7 +92,8 @@ InAs = Material0th(
     E_gap=0.354     # eV (approx at 300K)
 )
 
-if __name__ == "Zero_Order":
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt # importing matplotlib for plotting
     T_axis = np.linspace(250,1200,100) #Line plots of the temperature range from 250K to 1200K in 110 steps 
 
     materials = [Si, SiC, InAs]# lists of the material objects we created above 
@@ -106,3 +107,4 @@ if __name__ == "Zero_Order":
         plt.ylabel("Intrinsic Carrier Concentration ni (cm$^{-3}$)") #labels the y-axis
         plt.title(f"Zeroth-Order Intrinsic Carrier Concentration for {name}")#title of the actual plot
         plt.grid( True, which = "both", ls = "--") #adding a grid to the plot for better vsual clarity)) 
+plt.show() # finally show the plot once all the materials have been plotted
