@@ -192,7 +192,7 @@ def plot_freezeout_ratio_map(mat,
 
 if __name__ == "__main__":
     # Common ND axis
-    T_axis = np.linspace(100, 3000, 300) 
+    T_axis = np.linspace(0, 300, 300) 
     ND_vals = np.logspace(13, 20, 60)
 
     # Condition A: Silicon (similar window to your 1st-order Si plots, but extend down to low T)
@@ -202,7 +202,7 @@ if __name__ == "__main__":
                              T_vals=T_vals_Si,
                              NA_fixed=0.0,
                              title_prefix="Silicon:",
-                             fname="fig_Si_freezeout_ratio.png")
+                             fname="fig_Si_freezeout_ratio_LowTonly.png")
 
     # Condition B: 4H-SiC (higher max temp, but we still care about low-T freeze-out)
     T_vals_SiC = T_axis
@@ -211,7 +211,7 @@ if __name__ == "__main__":
                              T_vals=T_vals_SiC,
                              NA_fixed=0.0,
                              title_prefix="4H-SiC:",
-                             fname="fig_SiC_freezeout_ratio.png")
+                             fname="fig_SiC_freezeout_ratio_LowTonly.png")
 
     # Condition C: InAs (lower max temp)
     T_vals_InAs = T_axis
@@ -220,6 +220,6 @@ if __name__ == "__main__":
                              T_vals=T_vals_InAs,
                              NA_fixed=0.0,
                              title_prefix="InAs:",
-                             fname="fig_InAs_freezeout_ratio.png")
+                             fname="fig_InAs_freezeout_ratio_LowTonly.png")
 
    
