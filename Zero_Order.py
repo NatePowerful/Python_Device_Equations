@@ -91,3 +91,18 @@ InAs = Material0th(
     mstar_p=0.41,   # DOS hole mass / m0      (placeholder)
     E_gap=0.354     # eV (approx at 300K)
 )
+
+if __name__ == "Zero_Order":
+    T_axis = np.linspace(250,1200,100) #Line plots of the temperature range from 250K to 1200K in 110 steps 
+
+    materials = [Si, SiC, InAs]# lists of the material objects we created above 
+    names = ["Si","SiC","InAs"] # list of strings for the material names
+
+    plt.figure()
+    for mat, name in zip(materials,names):
+        ni_T = mat.ni(T_axis) # calling the ni method from each material object to get intrinsic carrier concentration as a function of temperature
+        plt.semilogy(T_axis,ni_T, label = name) #plotting the intrinsic carrier concentration vs temperature on a 2D semilog graph 
+        plt.xlabel("Temperature (K)") #labels the x-axis 
+        plt.ylabel("Intrinsic Carrier Concentration ni (cm$^{-3}$)") #labels the y-axis
+        plt.title(f"Zeroth-Order Intrinsic Carrier Concentration for {name}")#title of the actual plot
+        plt.grid( True, which = "both", ls = "--") #adding a grid to the plot for better vsual clarity)) 
