@@ -58,7 +58,7 @@ def donor_ionization_fraction_with_Fermi(mat, T, NA, ND,
 
     E_D_J = E_D_eV * q
     # exponent = (E_F - E_D)/kT = ln(n/Nc) - E_D/(kT)
-    exponent = np.log(n_safe / Nc_safe) - E_D_J / (kB * T)
+    exponent = np.log(n_safe / Nc_safe) + E_D_J / (kB * T)
 
     # Ionized fraction:
     fD = 1.0 / (1.0 + gD_local * np.exp(exponent))
@@ -99,7 +99,7 @@ def acceptor_ionization_fraction_with_Fermi(mat, T, NA, ND,
 
     E_A_J = E_A_eV * q
     # exponent = (E_A - E_F)/kT = ln(p/Nv) - E_A/(kT)
-    exponent = np.log(p_safe / Nv_safe) - E_A_J / (kB * T)
+    exponent = np.log(p_safe / Nv_safe) + E_A_J / (kB * T)
 
     fA = 1.0 / (1.0 + gA_local * np.exp(exponent))
 
