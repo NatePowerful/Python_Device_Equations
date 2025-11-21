@@ -237,48 +237,49 @@ if __name__ == "__main__":
     # Common ND axis
     ND_vals = np.logspace(14, 20, 121)
     NA_vals = np.logspace(14, 20, 121)
+    T_vals_Si   = np.linspace(150, 900, 300)
+    T_vals_SiC  = np.linspace(200, 1500, 300)
+    T_vals_InAs = np.linspace(100, 700, 300)
+
 
     # Condition A: Silicon
-    T_vals_Si = np.linspace(200, 900, 181)
     plot_sigma_map_n_type(Si,
                           ND_vals=ND_vals,
                           T_vals=T_vals_Si,
                           NA_fixed=1e14,
                           title_prefix="Silicon:",
-                          fname="fig_Si_sigma_n_type.png")
+                          fname="fig_Si_sigma_n_type_hightemp.png")
     plot_sigma_map_p_type(Si,
                           NA_vals=NA_vals,
                           T_vals=T_vals_Si,
                           ND_fixed=1e14,
                           title_prefix="Silicon:",
-                          fname="fig_Si_sigma_p_type.png")
+                          fname="fig_Si_sigma_p_type_hightemp.png")
 
     # Condition B: 4H-SiC – higher T window
-    T_vals_SiC = np.linspace(200, 1500, 181)
     plot_sigma_map_n_type(SiC,
                           ND_vals=ND_vals,
                           T_vals=T_vals_SiC,
                           NA_fixed=1e14,
                           title_prefix="4H-SiC:",
-                          fname="fig_SiC_sigma_n_type.png")
+                          fname="fig_SiC_sigma_n_type_hightemp.png")
     plot_sigma_map_p_type(SiC,
                           NA_vals=NA_vals,
                           T_vals=T_vals_SiC,
                           ND_fixed=1e14,
                           title_prefix="4H-SiC:",
-                          fname="fig_SiC_sigma_p_type.png")
+                          fname="fig_SiC_sigma_p_type_hightemp.png")
 
     # Condition C: InAs – narrower bandgap, lower T window
-    T_vals_InAs = np.linspace(200, 700, 161)
     plot_sigma_map_n_type(InAs,
                           ND_vals=ND_vals,
                           T_vals=T_vals_InAs,
                           NA_fixed=1e14,
                           title_prefix="InAs:",
-                          fname="fig_InAs_sigma_n_type.png")
-    plot_sigma_map_p_type(InAs,
+                          fname="fig_InAs_sigma_n_type_hightemp.png")
+    plot_sigma_map_p_type(InAs, 
                           NA_vals=NA_vals,
                           T_vals=T_vals_InAs,
                           ND_fixed=1e14,
                           title_prefix="InAs:",
-                          fname="fig_InAs_sigma_p_type.png")
+                          fname="fig_InAs_sigma_p_type_hightemp.png")
