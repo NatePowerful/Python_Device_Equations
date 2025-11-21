@@ -48,7 +48,7 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     print('running second order main ...') # verifying the plot function is running 
 
-    # Choos Teamperature (T) and doping axes once
+    # Choos Teamperature (T) and doping axes once here for all plots
     T_axis = np.linspace(300, 3200, 300) # K
     ND_axis = np.logspace(15, 20, 60) # cm^-3
     T_grid, ND_grid = np.meshgrid(T_axis, ND_axis, indexing="ij")#creates a grid of temperature and donor concentration values
