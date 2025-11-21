@@ -2,25 +2,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from dataclasses import dataclass
-# import Zero_Order   # <- keep commented out unless you actually have this module
 
-#need constraint if user inputs  unrealistic data
-
-# -------------------------
-# Universal constants
-# -------------------------
 q   = 1.602176634e-19        # C
 kB  = 1.380649e-23           # J/K, boltzmann const.
 h   = 6.62607015e-34         # J*s, planck const.
 m0  = 9.1093837015e-31       # kg free electron rest mass
 Tref = 300.0                 # K ref. temperature
 
-# SI → cm^-3 conversion: results from the DOS formula are in m^-3; multiply by 1e-6 to get cm^-3
+# SI → cm^-3 conversion: results from DOS in m^-3; multiply by 1e-6 to get cm^-3
 M3_TO_CM3 = 1e-6
 
-# -------------------------
-# Basic input validation (helps prevent unrealistic inputs)
-# -------------------------
+#validating input, prevents unrealistic temperature and doping levels
 def validate_inputs(T, NA, ND):
     if np.any(T < 0):
         raise ValueError("Temperature must be ≥ 0 K.")
@@ -29,10 +21,10 @@ def validate_inputs(T, NA, ND):
     if np.any(NA > 1e21) or np.any(ND > 1e21):
         print("Warning: dopings above ~1e21 cm^-3 are nonphysical for most semiconductors.")
 
-# -------------------------
+
+
 # DOS helpers (from first principles, includes π and h explicitly)
-# m_eff is DOS effective mass in units of m0 (electron rest mass)
-# -------------------------
+# m_eff is DOS effective mass in m0 (electron rest mass)
 def Nc_physical(T, m_eff):
     T = np.maximum(np.asarray(T, dtype=float), 1e-12)  # Added safety guard to avoid T=0
     return (2.0 * ((2.0 * np.pi * (m_eff * m0) * kB * T) / (h**2))**1.5) * M3_TO_CM3
@@ -41,15 +33,14 @@ def Nv_physical(T, m_eff):
     T = np.maximum(np.asarray(T, dtype=float), 1e-12)
     return (2.0 * ((2.0 * np.pi * (m_eff * m0) * kB * T) / (h**2))**1.5) * M3_TO_CM3
 
-# -------------------------
-# Material model (0th order)
-# -------------------------
+
+#class instance with set parameters, material-dependent
 @dataclass
 class Material0th:
     name: str
     mstar_n: float              # DOS effective mass for electrons, in units of m0, assuming given
     mstar_p: float              # DOS effective mass for holes, in units of m0, assuming given
-    E_gap: float                #given energy bandgap of material in eV, assuming negligible change for temp. window (for now...)
+    E_gap: float                #given energy bandgap of material in eV, assuming negligible change for temp. window for this case
  
     def Nc(self, T):
         return Nc_physical(T, self.mstar_n)
@@ -58,28 +49,26 @@ class Material0th:
         return Nv_physical(T, self.mstar_p)
 
     def ni(self, T):
-        Eg_J = self.E_gap * q                    # eV -> J
+        Eg_J = self.E_gap * q                    # eV -> J conversion
         Nc = self.Nc(T)
         Nv = self.Nv(T)
-        return np.sqrt(Nc * Nv) * np.exp(-Eg_J / (2.0 * kB * T))  # cm^-3
+        return np.sqrt(Nc * Nv) * np.exp(-Eg_J / (2.0 * kB * T))  # units of cm^-3
 
-# -------------------------
-# Example: Silicon (put YOUR class parameters here)
+
+# 3 conditions, 3 materials
 # mstar_n, mstar_p are DOS masses (not transport masses). The values below are common approximations;
-# replace with the exact values your instructor/text provides.
-# -------------------------
 Si = Material0th(
     name="Silicon",
     mstar_n=1.08,     # DOS electron mass (units of m0) – example
     mstar_p=0.81,     # DOS hole mass (units of m0) – example
-    E_gap = 1.1
+    E_gap = 1.1       #bandgap approx. from class
 )
 
 SiC = Material0th(
     name="4H-SiC",
     mstar_n=0.42,   # DOS electron mass / m0  (placeholder; use your class numbers if given)
     mstar_p=0.66,   # DOS hole mass / m0      (placeholder)
-    E_gap=2.2      # eV (approx at 300K per slide list)
+    E_gap=2.2      # eV (approx at 300K from slides list)
 )
 
 InAs = Material0th(
@@ -89,41 +78,44 @@ InAs = Material0th(
     E_gap=0.354     # eV (approx at 300K)
 )
 
-# -------------------------
+
 # 1st-order equations: Free carriers (complete ionization)
-# -------------------------
 def free_carriers_first_order(mat, T, NA, ND):
     """
     Compute 1st-order free carriers (complete ionization) for given material.
 
-    Parameters
-    ----------
-    mat : object with ni(T) -> intrinsic concentration in cm^-3
-    T   : K
+    
+
+
+    Parameters:
+    mat : object using ni(T) -> intrinsic concentration in cm^-3
+    T   : in Kelvin (K)
     NA  : cm^-3  (acceptor density)
     ND  : cm^-3  (donor density)
 
-    Returns
-    -------
-    n, p : cm^-3
+
+
+    Returns n and p in cm^-3
     """
-    # Added safety clamps
+    # Added barriers for unrealistically low doping or temperature values in arrays
+    #prevents division by zero
     T  = np.maximum(np.asarray(T,  dtype=float), 1e-12)
     NA = np.maximum(np.asarray(NA, dtype=float), 0.0)
     ND = np.maximum(np.asarray(ND, dtype=float), 0.0)
 
-    # Optional validation step
-    # validate_inputs(T, NA, ND)
+    
+    # validating inputs (T, NA, ND)
 
-    ni = mat.ni(T)                                 # cm^-3
+    ni = mat.ni(T)      # units cm^-3
     dN = ND - NA
-    # Guard against tiny numerical negatives under the square root:
+    # Guard against tiny negative vals under square root:
     root = np.sqrt(np.maximum((dN/2.0)**2 + ni**2, 0.0))
     n = root + dN/2.0
     # Avoid division by zero:
     n = np.maximum(n, 1e-30)
     p = (ni**2) / n
     return n, p
+
 
 # ---------- Plot functions ----------
 
@@ -150,15 +142,14 @@ def plot_n_map_vs_ND_T(mat,
         print(f"Warning [{mat.name} n-map]: region includes degenerate electrons (EF near/inside Ec). "
               "1st-order Boltzmann may be inaccurate there.")
 
-    # ---------- Improved visibility ----------
-    # Choose a physically interesting window and clip to it
+    # Choose relevant window, use clip
     vmin = 1e8   # cm^-3
     vmax = 1e20  # cm^-3
     n_plot = np.clip(n, vmin, vmax)
 
-    levels = np.logspace(np.log10(vmin), np.log10(vmax), 40)
+    levels = np.logspace(np.log10(vmin), np.log10(vmax), 40) #logspace for levels of vmin and vmax
 
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(10, 6)) #plot dimensions
     if use_log_color:
         cs = plt.contourf(ND_grid, T_grid, n_plot,
                           levels=levels,
@@ -172,12 +163,13 @@ def plot_n_map_vs_ND_T(mat,
                 levels=np.logspace(8, 20, 7),
                 colors="black", linewidths=0.5)
 
-    # Degenerate region hatching
+    # Degenerate region "hatching"
     plt.contour(ND_grid, T_grid, deg_mask.astype(float),
                 levels=[0.5], colors="k", linewidths=1.0)
     plt.contourf(ND_grid, T_grid, deg_mask.astype(float),
                  levels=[0.5, 1.1], hatches=["///"], colors="none", alpha=0)
 
+    #plotting logic, labels, titles, correct scaling
     plt.xscale("log")
     plt.xlabel(r"$N_D$ (cm$^{-3}$)")
     plt.ylabel("Temperature (K)")
@@ -253,9 +245,8 @@ def plot_p_map_vs_NA_T(mat,
     plt.close()
 
 
-# -------------------------
-# Run 1st-order plots for all conditions (A/B/C)
-# -------------------------
+
+# Run for all conditions
 if __name__ == "__main__":
     # Condition A: Silicon
     plot_n_map_vs_ND_T(Si,
@@ -265,7 +256,7 @@ if __name__ == "__main__":
                        title_prefix="Silicon:",
                        fname="fig_Si_free_p_map.png")
 
-    # Condition B: 4H-SiC — higher temperature window
+    # Condition B: 4H-SiC (higher temperature window, higher bandgap)
     plot_n_map_vs_ND_T(SiC,
                        T_vals=np.linspace(200, 1500, 181),
                        title_prefix="4H-SiC:",
@@ -284,6 +275,4 @@ if __name__ == "__main__":
                        T_vals=np.linspace(200, 700, 161),
                        title_prefix="InAs:",
                        fname="fig_InAs_free_p_map.png")
-
-    # show them interactively (optional if you just save figures)
     plt.show()

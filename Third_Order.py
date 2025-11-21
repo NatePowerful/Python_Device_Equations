@@ -16,10 +16,7 @@ Si  = Z0.Si
 SiC = Z0.SiC
 InAs = Z0.InAs
 
-# -------------------------
-# Additional constants for 3rd order
-# -------------------------
-# Permittivity of free space in F/cm (needed for depletion width)
+# Permittivity of free space in F/cm (needed for depletion width, needed for 3rd order)
 eps0 = 8.8541878128e-14  # F/cm
 
 # Material-specific permittivity and breakdown fields for 3rd order
@@ -51,14 +48,15 @@ def get_Ecrit(mat):
     """Return critical breakdown field (V/cm) for the given material."""
     params = MAT_3RD_PARAMS.get(mat.name)
     if params is None:
+        #default if not provided
         return 3.0e5
     return params["Ecrit"]
 
 # -------------------------
-# 3rd-order core equations:
+# 3rd-order main equations:
 #   - built-in potential φ_bi
 #   - depletion width W
-#   - peak electric field E_max
+#   - E_max gives peak E-field
 # -------------------------
 
 def builtin_potential(mat, T, NA, ND):
@@ -80,13 +78,13 @@ def builtin_potential(mat, T, NA, ND):
     NA = np.maximum(np.asarray(NA, dtype=float), 1e-30)
     ND = np.maximum(np.asarray(ND, dtype=float), 1e-30)
 
-    ni  = mat.ni(T)                         # cm^-3
+    ni  = mat.ni(T)                         # units in cm^-3
     ni2 = np.maximum(ni**2, 1e-60)
     prod = np.maximum(NA * ND, 1e-60)
 
-    kT_over_q = (kB * T) / q                # volts
-    phi_bi = kT_over_q * np.log(prod / ni2) # V
-    # guard against tiny negative from rounding
+    kT_over_q = (kB * T) / q                # units involts
+    phi_bi = kT_over_q * np.log(prod / ni2) # units V
+    # guard against tiny negative values in root from rounding
     phi_bi = np.maximum(phi_bi, 0.0)
     return phi_bi
 
@@ -109,16 +107,17 @@ def depletion_width(mat, T, NA, ND):
     -------
     W : cm
     """
+    #safeguards against unrealistic values/divsion by zero
     T  = np.maximum(np.asarray(T,  dtype=float), 1e-12)
     NA = np.maximum(np.asarray(NA, dtype=float), 1e-30)
     ND = np.maximum(np.asarray(ND, dtype=float), 1e-30)
 
     phi_bi = builtin_potential(mat, T, NA, ND)
     eps_rel = get_eps_rel(mat)
-    eps_s = eps_rel * eps0           # F/cm
+    eps_s = eps_rel * eps0           # units in F/cm
 
     factor = (1.0 / NA) + (1.0 / ND)
-    W = np.sqrt(2.0 * eps_s * phi_bi / q * factor)  # cm
+    W = np.sqrt(2.0 * eps_s * phi_bi / q * factor)  # units in cm
     return W
 
 
@@ -138,9 +137,7 @@ def peak_field(mat, T, NA, ND):
     W = np.maximum(W, 1e-20)
     return 2.0 * phi_bi / W
 
-# -------------------------
 # 3rd-order plot functions
-# -------------------------
 
 def plot_phi_bi_map_vs_NA_T(mat,
                             NA_vals=np.logspace(14, 19, 121),
@@ -203,14 +200,14 @@ def plot_W_map_vs_NA_T(mat,
     NA_grid, T_grid = np.meshgrid(NA_vals, T_vals, indexing="ij")
     ND_grid = np.full_like(NA_grid, ND_fixed)
 
-    W = depletion_width(mat, T_grid, NA_grid, ND_grid)  # cm
-    Emax   = peak_field(mat, T_grid, NA_grid, ND_grid)  # V/cm
+    W = depletion_width(mat, T_grid, NA_grid, ND_grid)  #units in cm
+    Emax   = peak_field(mat, T_grid, NA_grid, ND_grid)  #units in V/cm
     Ecrit  = get_Ecrit(mat)
     bd_mask = (Emax >= Ecrit)
 
     plt.figure()
     if use_log_color:
-        vmin = max(np.nanmax(W) * 1e-3, 1e-7)   # cm; floor ~1 nm
+        vmin = max(np.nanmax(W) * 1e-3, 1e-7)   # cm; floor of roughly 1 nm
         vmax = max(np.nanmax(W), vmin * 1e2)
         cs = plt.contourf(NA_grid, T_grid, W, levels=30,
                           norm=LogNorm(vmin=vmin, vmax=vmax))
@@ -223,6 +220,7 @@ def plot_W_map_vs_NA_T(mat,
     plt.contourf(NA_grid, T_grid, bd_mask.astype(float),
                  levels=[0.5, 1.1], hatches=["xxx"], colors="none", alpha=0)
 
+    #plot logic
     plt.xscale("log")
     plt.xlabel(r"$N_A$ (cm$^{-3}$)")
     plt.ylabel("Temperature (K)")
@@ -232,11 +230,9 @@ def plot_W_map_vs_NA_T(mat,
     plt.savefig(fname, dpi=200)
     plt.close()
 
-# -------------------------
-# Example driver: make 3rd-order plots for all three materials
-# -------------------------
+#plots for all conditions
 if __name__ == "__main__":
-    # Silicon: moderate temps
+    # Silicon: moderate temps relative to others
     plot_phi_bi_map_vs_NA_T(Si,
                             ND_fixed=1e16,
                             title_prefix="Silicon:",
@@ -246,7 +242,7 @@ if __name__ == "__main__":
                        title_prefix="Silicon:",
                        fname="fig_Si_W_map.png")
 
-    # 4H-SiC: higher temperature window (can go hotter)
+    # 4H-SiC: higher temperature window (higher temp)
     plot_phi_bi_map_vs_NA_T(SiC,
                             T_vals=np.linspace(200, 1500, 181),
                             ND_fixed=1e16,
@@ -258,7 +254,7 @@ if __name__ == "__main__":
                        title_prefix="4H-SiC:",
                        fname="fig_SiC_W_map.png")
 
-    # InAs: narrower gap; keep temps somewhat lower
+    # InAs: narrower gap; keep temps lower
     plot_phi_bi_map_vs_NA_T(InAs,
                             T_vals=np.linspace(200, 700, 161),
                             ND_fixed=1e16,
