@@ -119,7 +119,7 @@ def conductivity_first_order(mat, T, NA, ND):
     mu_p = hole_mobility(mat, T, N_scatter)
 
     # conductivity in S/cm
-    sigma = q * (n * mu_n + p * mu_p)
+    sigma = q * (n * mu_n + p * mu_p) #number of electrons, number of holes, each multiplied the mobility
 
     return sigma, mu_n, mu_p, n, p
 
