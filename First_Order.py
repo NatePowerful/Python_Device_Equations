@@ -135,28 +135,46 @@ def plot_n_map_vs_ND_T(mat,
                        fname="fig_free_n_map.png",
                        title_prefix="",
                        use_log_color=True):
+
+    # Grids
     ND_grid, T_grid = np.meshgrid(ND_vals, T_vals, indexing="ij")
     NA_grid = np.full_like(ND_grid, NA_fixed)
 
+    # 1st-order carriers
     n, _ = free_carriers_first_order(mat, T_grid, NA_grid, ND_grid)
 
-    # Degeneracy warning per slides: n/Nc >= exp(-3) ~ EF within ~3kT of Ec
+    # Degeneracy warning
     NcT = mat.Nc(T_grid)
     deg_mask = (n / np.maximum(NcT, 1e-300)) >= np.exp(-3.0)
     if np.any(deg_mask):
         print(f"Warning [{mat.name} n-map]: region includes degenerate electrons (EF near/inside Ec). "
               "1st-order Boltzmann may be inaccurate there.")
 
-    plt.figure()
-    # Added optional log-scale color mapping for wide carrier ranges (bounded for readability)
+    # ---------- Improved visibility ----------
+    # Choose a physically interesting window and clip to it
+    vmin = 1e8   # cm^-3
+    vmax = 1e20  # cm^-3
+    n_plot = np.clip(n, vmin, vmax)
+
+    levels = np.logspace(np.log10(vmin), np.log10(vmax), 40)
+
+    plt.figure(figsize=(10, 6))
     if use_log_color:
-        vmin = max(np.nanmax(n) * 1e-8, 1e5)      # keep lower bound reasonable
-        vmax = max(np.nanmax(n), vmin * 1e3)      # ensure ≥3 decades of range
-        cs = plt.contourf(ND_grid, T_grid, n, levels=30, norm=LogNorm(vmin=vmin, vmax=vmax))
+        cs = plt.contourf(ND_grid, T_grid, n_plot,
+                          levels=levels,
+                          norm=LogNorm(vmin=vmin, vmax=vmax),
+                          cmap="plasma")  # higher contrast
     else:
-        cs = plt.contourf(ND_grid, T_grid, n, levels=30)
-    # --- NEW: draw degenerate region with hatching (visual cue) ---
-    plt.contour(ND_grid, T_grid, deg_mask.astype(float), levels=[0.5], colors="k", linewidths=1.0)
+        cs = plt.contourf(ND_grid, T_grid, n_plot, levels=30, cmap="plasma")
+
+    # Add contour lines
+    plt.contour(ND_grid, T_grid, n_plot,
+                levels=np.logspace(8, 20, 7),
+                colors="black", linewidths=0.5)
+
+    # Degenerate region hatching
+    plt.contour(ND_grid, T_grid, deg_mask.astype(float),
+                levels=[0.5], colors="k", linewidths=1.0)
     plt.contourf(ND_grid, T_grid, deg_mask.astype(float),
                  levels=[0.5, 1.1], hatches=["///"], colors="none", alpha=0)
 
@@ -164,10 +182,13 @@ def plot_n_map_vs_ND_T(mat,
     plt.xlabel(r"$N_D$ (cm$^{-3}$)")
     plt.ylabel("Temperature (K)")
     plt.title(f"{title_prefix} Free Electron Concentration n (1st order)")
-    cbar = plt.colorbar(cs); cbar.set_label(r"n (cm$^{-3}$)")
+
+    cbar = plt.colorbar(cs)
+    cbar.set_label(r"n (cm$^{-3}$)")
+
     plt.tight_layout()
     plt.savefig(fname, dpi=200)
-    plt.close()   # Added to free memory after each figure
+    plt.close()
 
 #Here, we are leaving ND fixed while NA sweeps
 def plot_p_map_vs_NA_T(mat,
@@ -177,28 +198,45 @@ def plot_p_map_vs_NA_T(mat,
                        fname="fig_free_p_map.png",
                        title_prefix="",
                        use_log_color=True):
+
+    # Grids
     NA_grid, T_grid = np.meshgrid(NA_vals, T_vals, indexing="ij")
     ND_grid = np.full_like(NA_grid, ND_fixed)
 
+    # 1st-order carriers
     _, p = free_carriers_first_order(mat, T_grid, NA_grid, ND_grid)
 
-    # Degeneracy warning per slides: p/Nv >= exp(-3) ~ EF within ~3kT of Ev
+    # Degeneracy warning
     NvT = mat.Nv(T_grid)
     deg_mask = (p / np.maximum(NvT, 1e-300)) >= np.exp(-3.0)
     if np.any(deg_mask):
         print(f"Warning [{mat.name} p-map]: region includes degenerate holes (EF near/inside Ev). "
               "1st-order Boltzmann may be inaccurate there.")
 
-    plt.figure()
-    # Added optional log-scale color mapping for wide carrier ranges (bounded for readability)
+    # ---------- Improved visibility ----------
+    vmin = 1e8   # cm^-3
+    vmax = 1e20  # cm^-3
+    p_plot = np.clip(p, vmin, vmax)
+
+    levels = np.logspace(np.log10(vmin), np.log10(vmax), 40)
+
+    plt.figure(figsize=(10, 6))
     if use_log_color:
-        vmin = max(np.nanmax(p) * 1e-8, 1e5)
-        vmax = max(np.nanmax(p), vmin * 1e3)
-        cs = plt.contourf(NA_grid, T_grid, p, levels=30, norm=LogNorm(vmin=vmin, vmax=vmax))
+        cs = plt.contourf(NA_grid, T_grid, p_plot,
+                          levels=levels,
+                          norm=LogNorm(vmin=vmin, vmax=vmax),
+                          cmap="plasma")
     else:
-        cs = plt.contourf(NA_grid, T_grid, p, levels=30)
-    # --- NEW: draw degenerate region with hatching (visual cue) ---
-    plt.contour(NA_grid, T_grid, deg_mask.astype(float), levels=[0.5], colors="k", linewidths=1.0)
+        cs = plt.contourf(NA_grid, T_grid, p_plot, levels=30, cmap="plasma")
+
+    # Contour lines
+    plt.contour(NA_grid, T_grid, p_plot,
+                levels=np.logspace(8, 20, 7),
+                colors="black", linewidths=0.5)
+
+    # Degenerate region hatching
+    plt.contour(NA_grid, T_grid, deg_mask.astype(float),
+                levels=[0.5], colors="k", linewidths=1.0)
     plt.contourf(NA_grid, T_grid, deg_mask.astype(float),
                  levels=[0.5, 1.1], hatches=["///"], colors="none", alpha=0)
 
@@ -206,10 +244,14 @@ def plot_p_map_vs_NA_T(mat,
     plt.xlabel(r"$N_A$ (cm$^{-3}$)")
     plt.ylabel("Temperature (K)")
     plt.title(f"{title_prefix} Free Hole Concentration p (1st order)")
-    cbar = plt.colorbar(cs); cbar.set_label(r"p (cm$^{-3}$)")
+
+    cbar = plt.colorbar(cs)
+    cbar.set_label(r"p (cm$^{-3}$)")
+
     plt.tight_layout()
     plt.savefig(fname, dpi=200)
-    plt.close()   # keep close here; we'll call plt.show() in __main__
+    plt.close()
+
 
 # -------------------------
 # Run 1st-order plots for all conditions (A/B/C)
